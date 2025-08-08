@@ -1,0 +1,48 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/llm_db
+      - OLLAMA_API_URL=http://ollama:11434/api/generate
+      - SECRET_KEY=your_secret_key_here
+    networks:
+      - llm_net
+    depends_on:
+      - db
+      - ollama
+
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: llm_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - llm_net
+
+  ollama:
+    container_name: ollama
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - llm_net
+    tty: true
+    environment:
+      OLLAMA_MODEL_LOAD_TIMEOUT: "10m"  # Увеличиваем до 10 минут
+      OLLAMA_NUM_PARALLEL: "1"  # Отключаем параллельную загрузку
+      OLLAMA_KEEP_ALIVE: "false" 
+
+networks:
+  llm_net:
+
+volumes:
+  pgdata:
+  ollama_data:
