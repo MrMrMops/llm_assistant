@@ -3,6 +3,7 @@ uvicorn[standard]
 httpx
 sqlalchemy[asyncio]
 asyncpg
+psycopg2-binary
 python-jose[cryptography]
 passlib[bcrypt]
 pydantic
@@ -10,3 +11,4 @@ python-multipart
 pytest
 pytest-asyncio
 httpx
+alembic

@@ -1,8 +1,9 @@
 import asyncio
+import select
 import time
 import uuid
+from app.auth import get_current_user
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
 import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import async_session
@@ -15,20 +16,15 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 router = APIRouter()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 # OLLAMA_API_URL = os.getenv("OLLAMA_API_URL", "http://localhost:11434/api/generate")
 # OLLAMA_API_URL = "http://localhost:11434/api/generate"
 OLLAMA_API_URL = "http://ollama:11434/api/generate"
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
-    # Здесь должен быть код для верификации JWT и получение пользователя
-    # Для упрощения пока заглушка — реализуем позже
-    # Например, декодируем JWT, ищем в БД
-    raise HTTPException(status_code=501, detail="Not implemented")
+
 
 @router.post("/")
-async def get_ai_response(prompt: ChatRequest):
+async def get_ai_response(prompt: ChatRequest, user = Depends(get_current_user)):
     # Форматируем промпт по спецификации Llama 3
     formatted_prompt = (
         "<|begin_of_text|>"
@@ -55,42 +51,19 @@ async def get_ai_response(prompt: ChatRequest):
                     }
                 }
             )
+
+            
+
+
             result = response.json()
+
+            async with async_session() as db:
+                message = Message(user_id=user.id, prompt=prompt.prompt, response=result["response"])
+                db.add(message)
+                await db.commit()
+
             return result
             
-    except Exception as e:
+    except Exception as e: 
         raise HTTPException(500, f"Ollama error: {str(e)}")
-        
-# async def chat_endpoint(chat_req: ChatRequest):
-#     async with httpx.AsyncClient() as client:
-#         try:
-#             payload = {
-#                 "model": "llama3",
-#                 "prompt": chat_req.prompt
-#             }
-#             resp = await client.post(OLLAMA_API_URL, json=payload)
-#             resp.raise_for_status()
-#             data = resp.json()
-#             text = data.get("completion") or data.get("text") or ""
-        
-#         # Добавляем повторные попытки
-#             for _ in range(3):
-#                 try:
-#                      await client.post(OLLAMA_API_URL, json=payload)
-#                      resp.raise_for_status()
-#                      data = resp.json()
-#                      text = data.get("completion") or data.get("text") or ""
-                     
-#                 except ConnectionError:
-#                     await asyncio.sleep(5)  # Ждем 5 сек перед повтором
-#             raise HTTPException(503, "Ollama not ready")
-#         except httpx.HTTPError as e:
-#             raise HTTPException(status_code=500, detail=f"Error communicating with LLM server: {str(e)}")
 
-    # Сохраняем в БД
-    # async with async_session() as db:
-    #     message = Message(user_id=user.id, prompt=chat_req.prompt, response=text)
-    #     db.add(message)
-    #     await db.commit()
-
-    # return ChatResponse(response=text)

@@ -5,3 +5,11 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     response: str
+
+class UserOut(BaseModel):
+    id: int
+    username: str
+
+class UserCreate(BaseModel):
+    username: str 
+    password: str
