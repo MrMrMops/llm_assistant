@@ -47,7 +47,6 @@ async def get_ai_response(prompt: ChatRequest):
                     "model": "llama3",
                     "prompt": formatted_prompt,
                     "stream": False,
-                    "context": None,  # Критически важно!
                     "options": {
                         "temperature": 0.7,  # Для креативности
                         "num_ctx": 4096,
