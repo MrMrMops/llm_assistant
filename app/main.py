@@ -12,4 +12,4 @@ app.include_router(chat_router, prefix="/chat")
 @app.on_event("startup")
 async def startup():
     logger.info("Ожидание загрузки Ollama...")
-    await asyncio.sleep(10)  # Дополнительная задержка
+    await asyncio.sleep(30)  # Дополнительная задержка
